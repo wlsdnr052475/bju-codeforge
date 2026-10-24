@@ -1,0 +1,40 @@
+# Python environments and generated files
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+build/
+dist/
+*.egg
+*.spec
+
+# Local settings, credentials, logs and model weights
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+config.local.*
+settings.local.*
+user_settings/
+project_data/
+*.log
+*.gguf
+*.safetensors
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
