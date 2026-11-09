@@ -1,0 +1,121 @@
+name: Build Windows EXE
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/windows-exe.yml"
+      - "pyproject.toml"
+      - "src/**"
+      - "tests/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-exe:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    env:
+      PYTHONUTF8: "1"
+      SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install application and build tools
+        run: python -m pip install ".[dev,build]"
+
+      - name: Run tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m pytest -q
+
+      - name: Check code
+        run: |
+          python -m ruff check .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m ruff format --check .
+
+      - name: Build standalone GUI executable
+        run: >-
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --noupx
+          --name BJU-CodeForge --distpath dist --workpath build/pyinstaller
+          --specpath build src/bju_codeforge/__main__.py
+
+      - name: Verify packaged executable with the Windows Qt platform
+        shell: pwsh
+        run: |
+          Remove-Item Env:QT_QPA_PLATFORM -ErrorAction SilentlyContinue
+          Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
+          $exe = (Resolve-Path "dist/BJU-CodeForge.exe").Path
+          # Run away from the source tree, including a Korean path with spaces.
+          $smokeDir = Join-Path $env:RUNNER_TEMP "BJU 실행 확인"
+          New-Item -ItemType Directory -Path $smokeDir -Force | Out-Null
+          Copy-Item $exe (Join-Path $smokeDir "BJU-CodeForge.exe")
+          $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+          $startInfo.FileName = Join-Path $smokeDir "BJU-CodeForge.exe"
+          $startInfo.ArgumentList.Add("--smoke-test")
+          $startInfo.WorkingDirectory = $smokeDir
+          $startInfo.UseShellExecute = $false
+          $process = [System.Diagnostics.Process]::Start($startInfo)
+          try {
+            if (-not $process.WaitForExit(45000)) {
+              taskkill /PID $process.Id /T /F
+              throw "Packaged GUI smoke test timed out after 45 seconds."
+            }
+            if ($process.ExitCode -ne 0) {
+              throw "Packaged GUI smoke test failed: exit code $($process.ExitCode)."
+            }
+          } finally {
+            $process.Dispose()
+          }
+          Write-Output "PASS: standalone Windows EXE opened its GUI, exchanged a Mock message, and closed normally."
+
+      - name: Record build details and checksum
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash "dist/BJU-CodeForge.exe" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  BJU-CodeForge.exe" | Set-Content "dist/SHA256SUMS.txt" -Encoding utf8
+          $versions = python -c "import importlib.metadata as m, json; print(json.dumps({p:m.version(p) for p in ['bju-codeforge', 'PySide6', 'pyinstaller', 'pytest', 'ruff']}))"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          @{
+            source_commit = $env:SOURCE_COMMIT
+            workflow_commit = "${{ github.sha }}"
+            runner = "windows-2022 x64"
+            python = (python --version)
+            packages = ($versions | ConvertFrom-Json)
+            smoke_test = "passed: native Windows GUI, Mock roundtrip, normal exit"
+            sha256 = $hash
+          } | ConvertTo-Json -Depth 3 | Set-Content "dist/build-info.json" -Encoding utf8
+          @'
+          BJU CodeForge — MVP 1 / Windows x64
+
+          ZIP 파일의 압축을 풀고 BJU-CodeForge.exe를 더블클릭하세요.
+          Python, AI 모델, 별도 설치 프로그램은 필요하지 않습니다.
+          시작 시 내부 파일을 준비하므로 잠시 기다려 주세요.
+          메시지 입력 후 전송 또는 Enter를 누르면 고정된 Mock 응답이 표시됩니다.
+          실제 AI 연결 및 코드 수정 기능은 아직 없습니다.
+          이 실행파일은 코드 서명되지 않았습니다.
+
+          Windows 빌드 환경에서 실행을 자동 검증했습니다.
+          사용자 Windows 11의 한글 입력기/DPI/실제 화면 조작은 별도 확인이 필요합니다.
+          버전/빌드 출처: build-info.json / 무결성 확인: SHA256SUMS.txt
+          '@ | Set-Content "dist/README.txt" -Encoding utf8
+
+      - name: Upload verified Windows download
+        uses: actions/upload-artifact@v4
+        with:
+          name: BJU-CodeForge-Windows-x64
+          path: |
+            dist/BJU-CodeForge.exe
+            dist/SHA256SUMS.txt
+            dist/build-info.json
+            dist/README.txt
+          if-no-files-found: error
+          retention-days: 90

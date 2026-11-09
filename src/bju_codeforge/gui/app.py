@@ -11,9 +11,15 @@ from bju_codeforge.providers.mock import MockProvider
 
 def main(argv: list[str] | None = None) -> int:
     """Start the Qt event loop using the replaceable Mock Provider."""
-    app = QApplication(sys.argv if argv is None else argv)
+    arguments = list(sys.argv if argv is None else argv)
+    smoke_test = "--smoke-test" in arguments
+    app = QApplication([argument for argument in arguments if argument != "--smoke-test"])
     app.setApplicationName("BJU CodeForge")
     app.setOrganizationName("BJU")
     window = MainWindow(ChatAgent(MockProvider()))
     window.show()
+    if smoke_test:
+        from bju_codeforge.gui.smoke import run_smoke_test
+
+        return run_smoke_test(app, window)
     return app.exec()
