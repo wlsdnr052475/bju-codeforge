@@ -96,10 +96,10 @@ bju-codeforge/
 배포용 실행 파일에는 Python과 필요한 라이브러리가 포함됩니다.
 **사용자 PC에 Python을 설치하거나 명령어를 입력할 필요가 없습니다.**
 
-1. [Windows 실행 파일 빌드](https://github.com/wlsdnr052475/bju-codeforge/actions/workflows/windows-exe.yml)의
-   성공한 실행을 열고 **Artifacts → BJU-CodeForge-Windows-x64**를 선택하여
-   ZIP을 내려받습니다. GitHub 로그인이 필요할 수 있습니다. 구체적인 빌드 결과는
-   [PROGRESS.md](PROGRESS.md)를 확인하세요.
+1. [검증된 Windows 실행 파일 ZIP 다운로드](https://github.com/wlsdnr052475/bju-codeforge/actions/runs/42561343783/artifacts/13648848965)로
+   **BJU-CodeForge-Windows-x64** ZIP을 내려받습니다. GitHub 로그인이 필요할 수 있습니다.
+   [빌드 기록](https://github.com/wlsdnr052475/bju-codeforge/actions/runs/42561343783)과
+   구체적인 검증 결과는 [PROGRESS.md](PROGRESS.md)를 확인하세요.
 2. ZIP의 압축을 원하는 폴더에 풉니다.
 3. 폴더 안의 `BJU-CodeForge.exe`를 더블 클릭합니다.
 
