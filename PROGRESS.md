@@ -1,5 +1,46 @@
 # BJU CodeForge 진행 상황
 
+## 현재 작업 — Windows 실행 파일 (2026-11-09, Asia/Seoul)
+
+- 사용자 요청: 기존 디자인을 유지한 채 더블 클릭으로 실행할 수 있는 `.exe` 생성.
+- 작업 브랜치: `codex/windows-exe` (기존 MVP 커밋 `37e61ac` 기반).
+- 구현 완료: Windows x64 PyInstaller 단일 파일 빌드 설정, 실제 프로그램의
+  `--smoke-test` 경로, 검증 테스트 5개, 사용/개발 문서.
+- 클라우드 테스트 통과: Linux에서 `QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -q`
+  실행 결과 **24 passed in 1.31s**. 실패/스킵 0개.
+- `.venv/bin/python -m ruff check .`: **All checks passed!**
+- `.venv/bin/python -m ruff format --check .`: **20 files already formatted**.
+- `git diff --check`: 통과.
+- Linux 검증 환경: Python 3.12.14 / PySide6 6.12.0 / pytest 9.1.1 / Ruff 0.17.2.
+- 진행 중인 작업: 없음. 실행 파일 생성 및 다운로드 제공 완료.
+- 클라우드 테스트 통과 (Windows): Python 3.12.10 x64 / PySide6 6.12.0 /
+  PyInstaller 6.22.3 / pytest 9.2.0 / Ruff 0.17.4, `windows-2022` 러너.
+  `python -m pytest -q` **24 passed in 1.46s**. Ruff 검사/포맷 검사 모두 통과.
+- Windows 빌드/자동 검증 통과: PyInstaller 단일 실행 파일 생성 후, 소스 폴더 밖의
+  `BJU 실행 확인` 경로에서 `BJU-CodeForge.exe --smoke-test` 실행.
+  Qt Windows 플랫폼의 실제 창 생성, 한국어 메시지 전송, 정확한 Mock 응답,
+  입력 복구, 정상 창 종료와 프로세스 종료 코드 0을 확인했다.
+- 최종 클라우드 테스트 실패: Linux/Windows 모두 실패 0개, 스킵 0개.
+- [Windows 빌드/검증 기록](https://github.com/wlsdnr052475/bju-codeforge/actions/runs/42561343783)
+  / [검증된 실행파일 ZIP 다운로드](https://github.com/wlsdnr052475/bju-codeforge/actions/runs/42561343783/artifacts/13648848965).
+- 빌드 소스 커밋: `7298a9d800301d9ffd9ed54a9d9c10035e353654`.
+  이후 문서 커밋은 결과 기록만 변경하며 실행 코드/빌드 설정은 동일하다.
+- 산출물: `BJU-CodeForge-Windows-x64.zip` (49,049,879 bytes, 약 46.8 MiB).
+  ZIP 안에 `BJU-CodeForge.exe`, `README.txt`, `build-info.json`, `SHA256SUMS.txt` 포함.
+- ZIP SHA-256: `45aab45737e2e02b130e80c6644c23c740ff3ce9a8b2f545841df25eae5da034`.
+  EXE의 SHA-256은 ZIP에 동봉한 `SHA256SUMS.txt`에 기록된다.
+- GitHub Actions artifact 보관 만료 예정: 2027-02-07 (Asia/Seoul). 이후 새 빌드 필요.
+- 데스크탑 검증 대기: 사용자 Windows 11에서 압축 해제, 더블 클릭, 한글 입력,
+  버튼/Enter 전송, DPI/화면, 종료/재실행을 확인해야 한다.
+- 현재 미해결 구현 결함은 발견되지 않았다. 실행파일은 코드 서명되지 않는다.
+- 남은 구현 작업: 이번 실행파일 패키징 범위에서는 없음.
+- 다음 단계 한 가지: 사용자 Windows 11에서 실행 파일 수동 검증.
+
+아래는 기존 MVP 1 완료 당시의 기록이다. 실행 파일 패키징은 이후 사용자 요청으로
+추가된 범위이며, 아래 당시의 제외 항목은 현재 패키징 작업을 제한하지 않는다.
+
+## 이전 MVP 1 기록 (2026-10-24)
+
 - 현재 단계: MVP 1 구현 및 클라우드 자동 검증 완료 (2026-10-24, Asia/Seoul)
 - 작업 브랜치: `codex/mvp1-desktop-mock`
 - 기준: GitHub `wlsdnr052475/bju-codeforge`, `main`의 초기 커밋 `5955b2a`.

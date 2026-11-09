@@ -4,9 +4,10 @@
 Windows 11에서 실행하는 **Python/PySide6 데스크톱 프로그램**이며,
 웹 서버나 브라우저 UI를 사용하지 않습니다.
 
-현재 범위는 **MVP 1: 기본 GUI와 Mock AI**입니다. 실제 언어 모델 없이
-메시지 전달과 응답 표시 흐름을 검증하는 단계입니다. 최신 구현 상태와
-실제 테스트 결과는 [PROGRESS.md](PROGRESS.md)를 확인하세요.
+현재 범위는 **MVP 1: 기본 GUI와 Mock AI + Windows 실행 파일 패키징**입니다.
+2026-11-09 요청에 따라 기존 디자인과 Mock 동작을 유지하면서, Python 설치 없이
+실행할 수 있는 `BJU-CodeForge.exe`를 만듭니다. 실제 언어 모델은 연결하지 않습니다.
+최신 구현 상태와 실제 빌드·테스트 결과는 [PROGRESS.md](PROGRESS.md)를 확인하세요.
 
 ## MVP 1 기능과 범위
 
@@ -24,7 +25,7 @@ Windows 11에서 실행하는 **Python/PySide6 데스크톱 프로그램**이며
 
 **이번 단계에서 제외:** 실제 Strata 연결, Qwen 실행, GPU 가속, 코드 자동 수정,
 파일 관리 에이전트, GitHub 자동 연동, RAG/벡터 데이터베이스, 모델 미세조정,
-복잡한 플러그인 구조, exe 패키징.
+복잡한 플러그인 구조, 설치 프로그램.
 
 ## 기술 스택과 개발 환경
 
@@ -33,6 +34,7 @@ Windows 11에서 실행하는 **Python/PySide6 데스크톱 프로그램**이며
 | 언어 | Python 3.11 이상 |
 | GUI | PySide6 6.8 이상, 7 미만 |
 | 패키지 | `src` 구조, `pyproject.toml`, setuptools |
+| Windows 실행 파일 | Python 3.12 x64, PyInstaller 6.11 이상/7 미만, GitHub Actions |
 | 테스트 | pytest, PySide6 QtTest, offscreen 플랫폼 |
 | 코드 검사 | Ruff |
 | 개발/자동 검증 | Codex Cloud의 Linux 환경 |
@@ -72,6 +74,7 @@ bju-codeforge/
 ├── AGENTS.md
 ├── PROGRESS.md
 ├── .agents/skills/bju-codeforge-verify/SKILL.md
+├── .github/workflows/windows-exe.yml
 ├── src/bju_codeforge/
 │   ├── __init__.py
 │   ├── __main__.py
@@ -88,7 +91,28 @@ bju-codeforge/
 현재는 저장 기능을 구현하지 않습니다. 가상환경, 캐시, 빌드 산출물 및 민감한
 로컬 설정은 Git 추적에서 제외합니다.
 
-## Windows 11 설치와 실행
+## Windows 11에서 실행 파일 사용
+
+배포용 실행 파일에는 Python과 필요한 라이브러리가 포함됩니다.
+**사용자 PC에 Python을 설치하거나 명령어를 입력할 필요가 없습니다.**
+
+1. [검증된 Windows 실행 파일 ZIP 다운로드](https://github.com/wlsdnr052475/bju-codeforge/actions/runs/42561343783/artifacts/13648848965)로
+   **BJU-CodeForge-Windows-x64** ZIP을 내려받습니다. GitHub 로그인이 필요할 수 있습니다.
+   [빌드 기록](https://github.com/wlsdnr052475/bju-codeforge/actions/runs/42561343783)과
+   구체적인 검증 결과는 [PROGRESS.md](PROGRESS.md)를 확인하세요.
+2. ZIP의 압축을 원하는 폴더에 풉니다.
+3. 폴더 안의 `BJU-CodeForge.exe`를 더블 클릭합니다.
+
+별도 설치 과정이 없는 Windows x64용 단일 실행 파일입니다. 기존 화면 디자인과
+메시지 입력·Mock 응답 동작은 유지됩니다. 실제 AI 모델이나 GPU를 사용하는 버전은
+아닙니다. 창을 닫으면 현재 대화가 사라집니다.
+
+실행 파일은 코드 서명되지 않았으므로 Windows에서 게시자 확인 경고가 표시될 수
+있습니다. 다운로드 출처와 함께 제공되는 `build-info.json`의 빌드 정보를 확인하세요.
+ZIP에는 `SHA256SUMS.txt`와 간단한 실행 안내 `README.txt`도 포함됩니다.
+Actions 다운로드는 90일 보관되며, 만료되면 새 빌드가 필요합니다.
+
+## Windows 11에서 소스로 실행하기
 
 Python 3.11 이상을 설치하고, 저장소를 내려받은 폴더에서 PowerShell을 엽니다.
 아래 명령은 가상환경을 활성화하지 않아도 실행할 수 있습니다.
@@ -107,6 +131,35 @@ py -3 -m venv .venv
 창의 입력란에 한국어 또는 영어 메시지를 입력하고 전송 버튼이나 Enter를 누릅니다.
 사용자 영역에는 입력이, AI 영역에는 고정된 Mock 응답이 표시됩니다.
 창을 닫으면 현재 대화가 사라집니다.
+
+## Windows 실행 파일 빌드
+
+개발자를 위한 절차입니다. 빌드는 네이티브 Windows x64/Python 3.12에서 수행합니다.
+Linux에서 만든 바이너리를 Windows 실행 파일로 간주하지 않습니다.
+실제 빌드 명령과 자동 검증은
+[windows-exe.yml](.github/workflows/windows-exe.yml)에 정의합니다.
+
+PowerShell에서 저장소 루트로 이동한 뒤 실행합니다.
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev,build]"
+.\.venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --onefile --windowed --noupx --name BJU-CodeForge --distpath dist --workpath build/pyinstaller --specpath build src/bju_codeforge/__main__.py
+```
+
+산출물은 `dist/BJU-CodeForge.exe`입니다. `--onefile`은 단일 파일로 묶고,
+`--windowed`는 콘솔 창을 표시하지 않으며, `--noupx`는 UPX 압축을 사용하지 않습니다.
+가상환경과 `build/`, `dist/`, 생성된 `.spec` 파일은 커밋하지 않습니다.
+
+GitHub Actions의 `windows-2022` x64 러너는 소스 테스트와 Ruff 검사, Windows 빌드,
+생성한 실행 파일의 `--smoke-test` 검증을 수행합니다. 이 숨겨진 테스트 모드는
+실제 일반 창을 생성하고 Mock 메시지 왕복을 확인한 뒤 종료합니다. Qt의 Windows
+플랫폼을 사용하며 소스 폴더 밖의 한글·공백 포함 경로에서 실행합니다. CI는 프로세스에
+45초의 외부 시간 제한을 적용하여 시작 실패나 응답 정지를 검출합니다. 일반 더블 클릭
+실행에는 자동 종료 테스트가 적용되지 않습니다.
+
+Windows CI 결과와 사용자의 Windows 11 수동 검증은 별도로 기록합니다.
+실행 파일 빌드 성공만으로 사용자 데스크톱 검증을 통과 처리하지 않습니다.
 
 ## Linux 클라우드 개발 환경
 
@@ -145,6 +198,8 @@ GUI 생성과 메시지 전송 및 백그라운드 처리 흐름을 확인합니
 
 Windows 11에서 별도로 확인할 항목:
 
+- ZIP 압축 해제 후 Python 설치 없이 `BJU-CodeForge.exe` 더블 클릭 실행.
+- 콘솔 창 없이 기존 화면이 나타나고, Mock 응답 확인 후 창을 닫아 정상 종료되는지 확인.
 - 설치 및 `python -m bju_codeforge` 실행, 창 제목과 필수 UI 표시.
 - 한국어 입력기, 한글·영문 표시, 전송 버튼과 Enter 동작.
 - 빈 입력 방지, 반복 전송과 Mock 응답 표시.
@@ -168,7 +223,8 @@ Windows GUI 수동 조작과 GPU/모델 성능은 클라우드 offscreen 테스�
 장기 목표는 자연어 대화, 프로젝트 구조 분석, 코드 생성·수정 제안, 승인 후 변경,
 테스트/오류 분석, 파일 탐색, GitHub 연동, 이력·문맥·로그·설정 관리, 기능 모듈의
 활성화/비활성화, 도구 확장 및 제한된 자율 코딩입니다. 이 목표들은 MVP 1에
-구현하지 않습니다. 실행 파일 또는 설치 프로그램 배포도 향후 단계입니다.
+구현하지 않습니다. 현재 단일 실행 파일 패키징에 더해 설치 프로그램과 코드 서명은
+향후 별도 범위로 다룹니다.
 
-**다음 단계는 Windows 11 데스크톱에서 MVP 1 실행 검증입니다.**
+**다음 단계는 Windows 11 데스크톱에서 배포 실행 파일을 수동 검증하는 것입니다.**
 발견된 문제를 기록하고 수정한 뒤, 별도 요청에 따라 다음 개발 범위를 결정합니다.

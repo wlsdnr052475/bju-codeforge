@@ -3,8 +3,11 @@
 ## 범위와 개발 원칙
 - Python 3.11 이상, PySide6 기반 Windows 11 데스크톱 프로그램으로 개발한다.
 - 웹 UI, 브라우저 UI, 웹 서버를 만들지 않는다. 의존성은 필요한 것만 추가한다.
-- 현재 범위는 MVP 1이다. 실제 Strata/Qwen 연결, GPU 가속, 자동 파일 수정,
-  명령 실행, GitHub 연동, RAG, 플러그인 시스템, exe 패키징은 별도 요청 전 구현하지 않는다.
+- 현재 범위는 MVP 1과 사용자가 2026-11-09 요청한 Windows 실행 파일 패키징이다.
+  기존 화면 디자인과 Mock AI 동작을 유지하며, Python 설치 없이 실행하는
+  `BJU-CodeForge.exe`를 제공한다.
+- 실제 Strata/Qwen 연결, GPU 가속, 자동 파일 수정, 명령 실행, 애플리케이션의
+  GitHub 연동, RAG, 플러그인 시스템, 설치 프로그램은 별도 요청 전 구현하지 않는다.
 - GUI → 에이전트 → LLM Provider의 의존 방향을 지킨다. 핵심 로직은 Qt에 의존하지 않는다.
 - 긴 Provider 호출은 GUI 스레드 밖에서 수행하고, 오류 및 창 종료 시 수명을 관리한다.
 
@@ -14,6 +17,7 @@
 - `providers/`: 교체 가능한 Provider 인터페이스와 구현.
 - `gui/`: PySide6 화면 및 백그라운드 작업 연결.
 - `tests/`: 핵심 로직, Provider, GUI 자동 테스트.
+- `.github/workflows/windows-exe.yml`: Windows x64 자동 검증 및 실행 파일 빌드.
 - `.agents/skills/bju-codeforge-verify/SKILL.md`: 반복 가능한 검증 절차.
 - 사용자 설정과 프로젝트 데이터는 소스 및 서로의 저장 위치와 분리한다.
   MVP 1에는 설정 저장이나 프로젝트 파일 접근 기능을 추가하지 않는다.
@@ -30,6 +34,13 @@
 - Windows PowerShell: `$env:QT_QPA_PLATFORM="offscreen"; python -m pytest -q`.
 - `python -m ruff check .` 및 `python -m ruff format --check .`를 실행한다.
 - 변경과 관련된 정상/오류 경로를 검증한다. GUI 테스트는 임의의 긴 sleep을 피한다.
+- Windows 실행 파일은 네이티브 Windows x64/Python 3.12에서
+  `python -m pip install -e ".[dev,build]"` 후 PyInstaller로 빌드한다.
+  단일 파일, 콘솔 창 없음, UPX 미사용 옵션과 실제 명령은 workflow를 기준으로 한다.
+- 실행 파일의 숨겨진 `--smoke-test` 모드는 일반 창과 Mock 응답 흐름을 검증하고
+  종료해야 한다. CI에서 외부 프로세스 시간 제한을 적용하여 멈춤을 실패로 처리한다.
+- Linux 테스트, 네이티브 Windows 빌드/자동 검증, 사용자 Windows 11 수동 검증을
+  구분한다. 빌드 성공만으로 사용자의 데스크톱 검증을 완료 처리하지 않는다.
 - 테스트 실패를 숨기거나 실행하지 않은 검증을 통과로 기록하지 않는다.
 
 ## 파일 수정 안전 규칙
@@ -47,4 +58,5 @@
 - Windows GUI 조작, AMD GPU 가속, 모델 성능은 클라우드에서 검증했다고 주장하지 않는다.
 - 완료 보고는 한국어로 작성하며 파일, 구현 기능, 테스트 명령/결과, 미해결 문제,
   Windows 검증 항목, 다음 단계 한 가지를 포함한다.
-- MVP 1 완료 후 멈추고, 별도 요청 없이 다음 개발 단계로 넘어가지 않는다.
+- 승인된 MVP 1 실행 파일 패키징 완료 후 멈추고, 별도 요청 없이 다음 기능
+  개발 단계로 넘어가지 않는다.
